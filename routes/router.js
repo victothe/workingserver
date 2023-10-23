@@ -167,26 +167,51 @@ const poll = async () => {
         const rankresponse = await axios.get(rankurl);
         const rankdata = rankresponse.data;
 
-        let rank = "";
+        let fullrank = "";
+        let tier = ""
         let lp = 0;
+        let rank = ""
 
         for (let k = 0; k < rankdata.length; k++) {
           if (rankdata[k].queueType === "RANKED_SOLO_5x5") {
-            rank = rankdata[k].tier + " " + rankdata[k].rank;
+            tier = rankdata[k].tier
+            rank = rankdata[k].rank;
             lp = rankdata[k].leaguePoints;
+            fullrank = tier + " " + rank
           }
+        }
+        
+        const oldRank = summoners[i].rank
+        const oldTier = summoners[i].tier
+
+        let lpChange = 0
+
+        if(tier == oldTier && rank == oldRank) {
+          lpChange = lp - summoners[i].lp
         }
 
         const summonerName = summoners[i].description;
 
         const newMatch = await pool.query(
-          "INSERT INTO matches (winloss, rank, summoner, lp, gamestart, length) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
-          [win, rank, summonerName, lp, gameStart, time]
+          "INSERT INTO matches (winloss, rank, summoner, lp, gamestart, length, lpchange) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+          [win, fullrank, summonerName, lp, gameStart, time, lpChange]
         );
 
-        // need to change summoners recent to new match
+        // need to change summoners recent to new match and update rank
         await pool.query("UPDATE info SET recent = $1 WHERE description = $2", [
           data[0],
+          summoners[i].description,
+        ]);
+        await pool.query("UPDATE info SET rank = $1 WHERE description = $2", [
+          rank,
+          summoners[i].description,
+        ]);
+        await pool.query("UPDATE info SET lp = $1 WHERE description = $2", [
+          lp,
+          summoners[i].description,
+        ]);
+        await pool.query("UPDATE info SET tier = $1 WHERE description = $2", [
+          tier,
           summoners[i].description,
         ]);
 

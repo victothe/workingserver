@@ -20,14 +20,14 @@ app.use("/", router);
 
 app.post("/addSummoner", async (req, res) => {
   try {
-    const { summonerName, selectedReigion, puuid, mostRecentMatch, playerId } =
+    const { summonerName, selectedReigion, puuid, mostRecentMatch, playerId, tier, rank, lp } =
       req.body;
     console.log(
       `now tracking ${summonerName} ${selectedReigion} ${puuid} ${mostRecentMatch} ${playerId}`
     );
     const newSummoner = await pool.query(
-      "INSERT INTO info (description, reigion, puuid, recent, id) VALUES($1, $2, $3, $4, $5) RETURNING *",
-      [summonerName, selectedReigion, puuid, mostRecentMatch, playerId]
+      "INSERT INTO info (description, reigion, puuid, recent, id, rank, lp, tier) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+      [summonerName, selectedReigion, puuid, mostRecentMatch, playerId, rank, lp, tier]
     );
 
     res.json(newSummoner.rows[0]);
